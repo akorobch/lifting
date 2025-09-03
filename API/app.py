@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask
 from flask_restx import Api, Resource, fields, reqparse
 from models import db, User, Exercise, Workout, Set, SchemaVersion
@@ -5,11 +7,23 @@ from datetime import datetime
 from functools import wraps
 from analytics import calculate_one_rep_max, find_pr, get_sets_for_exercise_and_user
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Initialize Flask and SQLAlchemy
 app = Flask(__name__)
 # Configure a simple SQLite database for local testing
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lifting.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:devops123@localhost/lifting-replica'
+# Get database credentials from environment variables
+db_user = os.getenv('DB_USERNAME')
+db_password = os.getenv('DB_PASSWORD')
+db_host = os.getenv('DB_HOST')
+db_name = os.getenv('DB_NAME')
+
+# Construct the database URI and set it in the app config
+database_uri = f"mysql://{db_user}:{db_password}@{db_host}/{db_name}"
+app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['RESTX_MASK_SWAGGER'] = False  # Allows full API doc in Swagger
 
@@ -28,7 +42,19 @@ authorizations = {
 }
 
 db.init_app(app)
-api = Api(app, version='1.0', title='Lifting API', description='API for tracking lifting workouts', doc='/swagger/', authorizations=authorizations, security=['apikey', 'userid'])
+
+# --- Get API Metadata from Environment Variables ---
+api_version = os.getenv('API_VERSION')
+api_title = os.getenv('API_TITLE')
+api_description = os.getenv('API_DESCRIPTION')
+
+api = Api(app,
+          version=api_version,
+          title=api_title,
+          description=api_description,
+          doc='/swagger/',
+          authorizations=authorizations,
+          security=['apikey', 'userid'])
 
 
 # Create the database tables
@@ -129,6 +155,7 @@ parser = reqparse.RequestParser()
 parser.add_argument('first_name', type=str, required=True, help='First name of the user')
 parser.add_argument('last_name', type=str, required=True, help='Last name of the user')
 parser.add_argument('email', type=str, required=True, help='Email of the user')
+
 
 @ns_users.route('/add')
 class UserAdd(Resource):
