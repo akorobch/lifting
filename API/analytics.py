@@ -1,5 +1,6 @@
 from models import db, Workout, Set
 
+
 def calculate_one_rep_max(weight, reps):
 	"""
 	Calculates the 1RM for a single set using the Epley formula.
