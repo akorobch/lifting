@@ -24,5 +24,11 @@ jobs:
         pip install -r API/requirements.txt
 
     - name: Run tests
+      env:
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DATA_FILE: ${{ secrets.DATA_FILE }}
       run: |
         pytest -s API/test_app.py
