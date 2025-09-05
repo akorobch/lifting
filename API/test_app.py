@@ -1,4 +1,4 @@
-import os
+import os, json
 from dotenv import load_dotenv
 from sqlalchemy import text
 import pytest
@@ -283,22 +283,44 @@ def test_add_and_update_set(test_client, session, app):
 	print("--- Final JSON values: ", retrieved_set)
 
 
-def test_calculate_one_rep_max(test_client, app, session, seed_database):
-    """
-    Test the /analytics/sets/<int:setID>/calc1rm endpoint
-    """
+def test_calculate_one_rep_max(test_client, app, session):
+	"""
+	Test the /analytics/sets/<int:setID>/calc1rm endpoint
+	"""
 
-    headers = {
-       'X-User-ID': 1,
-       'X-User-Role': 'admin'
-    }
+	headers = {
+		'X-User-ID': 1,
+		'X-User-Role': 'admin'
+	}
 
-    set_to_calculate = 1
-    print(f"\n--- Testing successful 1RM calculation of set {set_to_calculate} ---")
-    res = test_client.get(f'/analytics/sets/{set_to_calculate}/calc1rm', headers=headers)
-    assert res.status_code == 200
-    data = res.get_json()
-    assert data['set_id'] == 1
-    # We are happy if the value returned is greater than zero
-    assert data['one_rep_max'] > 0
-    print(f"--- 1RM for set 1: {data['one_rep_max']}")
+	set_to_calculate = 1
+	print(f"\n--- Testing successful 1RM calculation of set {set_to_calculate} ---")
+	res = test_client.get(f'/analytics/sets/{set_to_calculate}/calc1rm', headers=headers)
+	assert res.status_code == 200
+	data = res.get_json()
+	assert data['set_id'] == 1
+	# We are happy if the value returned is greater than zero
+	assert data['one_rep_max'] > 0
+	print(f"--- 1RM for set 1: {data['one_rep_max']}")
+
+
+def test_find_pr(test_client, app, session):
+	"""
+	Test the /analytics/users/<int:userID>/exercises/<int:exerciseID>/findpr endpoint
+	"""
+
+	headers = {
+		'X-User-ID': 1,
+		'X-User-Role': 'admin'
+	}
+
+	user_to_calculate = 1
+	exercise_to_calculate = 1
+	users_dump = json.loads(test_client.get(f'/users/', headers=headers).data)
+	user_name = users_dump[0]['first_name']
+	print(f"\n--- Testing successful PR calculation for user {user_name} ---")
+	res = test_client.get(f'/analytics/users/{user_to_calculate}/exercises/{exercise_to_calculate}/findpr', headers=headers)
+	assert res.status_code == 200
+	data = res.get_json()
+	assert data['max_weight'] == 155
+	print(f"--- 1RM for user {user_name} for exercise {exercise_to_calculate}: {data['max_weight']}")
