@@ -109,7 +109,7 @@ def test_add_user_success(test_client, session):
 	# Check the response data instead of database count
 	added_user = res.get_json()
 	print(f"--- Ensure added user's first email is {added_user['email']} ---")
-	assert added_user['first_name'] == 'Raj'
+	assert added_user['first_name'] == 'Rajesh'
 	assert added_user['email'] == 'raj@devops-innovations.com'
 
 
