@@ -37,7 +37,7 @@ jobs:
         DB_USERNAME: root
         DB_PASSWORD: ''
         DB_HOST: 127.0.0.1
-        DB_NAME: test_db
+        DB_NAME: lifting_db
         DATA_FILE: DB/data.sql
       run: |
         pytest -s API/test_app.py
