@@ -1,311 +1,304 @@
-import unittest
-from app import app, db, User, Exercise, Workout
+import os
+from dotenv import load_dotenv
+from sqlalchemy import text
+import pytest
+from app import app as flask_app, db, User, Exercise, Workout, Set
+
+# Load environment variables from the .env file
+load_dotenv()
+
+# Your other code, which can now access the variables
+db_username = os.getenv("DB_USERNAME")
+db_password = os.getenv("DB_PASSWORD")
+db_host = os.getenv("DB_HOST")
+db_name = os.getenv("DB_NAME")
+
+print(f"Connecting to database: {db_name} on {db_host} with user {db_username}")
 
 
-class MyTestResult(unittest.TextTestResult):
-    def getDescription(self, test):
-        return test.shortDescription() or str(test)
+def load_data(app, db):
+	"""Loads SQL data from a file into the database."""
+	# This path is relative to your project root.
+	sql_file_path = 'C:\\Users\\akoro\\OneDrive\\Documents\\GitHub\\Lifting\\DB\\data.sql'
 
-    def addSuccess(self, test):
-        self.stream.write(f"\n✅  SUCCESS: {self.getDescription(test)}\n\n")
+	with open(sql_file_path, 'r', encoding='utf-8') as f:
+		sql_script = f.read()
 
-    def addFailure(self, test, err):
-        self.stream.write(f"\n❌  FAILED: {self.getDescription(test)}\n")
-
-
-class MyTestRunner(unittest.TextTestRunner):
-    resultclass = MyTestResult
-
-
-class LiftingAPITestCase(unittest.TestCase):
-    """This class represents the lifting api test case"""
-
-    def setUp(self):
-        """Define test variables and initialize app."""
-        app.config['TESTING'] = True
-        app.config['WTF_CSRF_ENABLED'] = False
-        app.config['DEBUG'] = False
-        # Use an in-memory SQLite database for testing
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-        self.app = app.test_client()
-
-        # create all tables
-        with app.app_context():
-            db.create_all()
-            # Seed the database with a user for testing
-            test_user = User(email='testuser@devops-inno.com', first_name='unittest', last_name='admin')
-            db.session.add(test_user)
-            db.session.commit()
-
-            # Store the ID assigned by the database for future tests
-            self.admin_user_id = test_user.id
-
-    def tearDown(self):
-        """Executed after each test"""
-        with app.app_context():
-            db.session.remove()
-            db.drop_all()
-
-    def test_admin_login_success(self):
-        """Login and find yourself."""
-        headers = {
-            'X-User-ID': str(self.admin_user_id),
-            'X-User-Role': 'admin'
-        }
-
-        # Actual condition:
-        res = self.app.get('/users/', headers=headers)
-        actual_status = res.status_code
-
-        print("\n--- Login successful ---")
-        expected_status_code = 200
-
-        # Assert the actual outcome against the expected outcome
-        self.assertEqual(res.status_code, expected_status_code)
-
-        print("--- Getting JSON user data ---")
-        data = res.get_json()
-
-        print("--- Checking one user only ---")
-        number_of_users = 1
-        self.assertIsInstance(data, list)
-        self.assertTrue(len(data) == number_of_users)
-
-        print("--- Finding user by email ---", end="", flush=True)
-        first_user = data[0]
-        self.assertEqual(first_user['id'], self.admin_user_id)
-        self.assertEqual(first_user['email'], 'testuser@devops-inno.com')
-
-    def test_swagger_docs_are_available(self):
-        """Test for the swagger documentation"""
-        print("\n--- Swagger docs are reachable ---", end="", flush=True)
-
-        # Actual condition:
-        res = self.app.get('/swagger.json')
-        actual_status = res.status_code
-
-        # Expected condition:
-        expected_status = 200
-
-        self.assertEqual(res.status_code, 200)
-
-    def test_get_users_unauthorized(self):
-        """Test the API's unauthorized user list retrieval."""
-
-        print("\n--- Getting error 401 ---", end="", flush=True)
-
-        # Actual condition:
-        res = self.app.get('/users/')
-        actual_status = res.status_code
-
-        # Expected condition:
-        expected_status = 401
-
-        # Result:
-        self.assertEqual(actual_status, expected_status)
-
-    def test_add_user_success(self):
-        """Test a new user can be added successfully by an admin."""
-
-        # 1. Define the actual conditions
-        headers = {
-            'X-User-ID': '1',  # An existing admin user from setUp
-            'X-User-Role': 'admin'
-        }
-        payload = {
-            'first_name': 'Alex',
-            'last_name': 'Korobchevsky',
-            'email': 'alex@devops-inno.com'
-        }
-
-        print("\n--- Adding new user via POST request ---")
-        res = self.app.post('/users/add', json=payload, headers=headers)
-
-        print("--- Validate status 201 ---")
-        self.assertEqual(res.status_code, 201)
-
-        print("--- Ensure number of users is now 2 ---")
-        with app.app_context():
-            users = User.query.all()
-            self.assertEqual(len(users), 2)
-
-        print("--- Ensure  added user's first name is correct ---", end="", flush=True)
-        added_user = res.get_json()
-        self.assertEqual(added_user['first_name'], 'Alex')
-
-    def test_disable_enable_user(self):
-        """Test that a user can be disabled and re-enabled by an admin."""
-        # First, add a user to the database to be disabled/enabled
-        # Let the database handle the ID
-        new_user_data = {
-            'email': 'alex@devops-inno.com',
-            'first_name': 'Alex',
-            'last_name': 'Korobchevsky',
-        }
-
-        # Use the add user endpoint to create the user
-        headers = {
-            'X-User-ID': str(self.admin_user_id),
-            'X-User-Role': 'admin'
-        }
-
-        print("\n--- Adding user via POST ---")
-        res_add = self.app.post('/users/add', json=new_user_data, headers=headers)
-        self.assertEqual(res_add.status_code, 201)
-        added_user = res_add.get_json()
-        added_user_id = added_user['id']
-
-        print("--- Ensure user enabled ---")
-        with app.app_context():
-            user = db.session.get(User, added_user_id)
-            self.assertEqual(user.enabled, 1)
-
-        print("--- Disabling the user  ---")
-        res_disable = self.app.put(f'/users/{added_user_id}/disable', headers=headers)
-        self.assertEqual(res_disable.status_code, 200)
-
-        print("--- Ensure user disabled ---")
-        with app.app_context():
-            user = db.session.get(User, added_user_id)
-            self.assertEqual(user.enabled, 0)
-
-        print("--- Enabling the user  ---")
-        res_enable = self.app.put(f'/users/{added_user_id}/enable', headers=headers)
-        self.assertEqual(res_enable.status_code, 200)
-
-        print("--- Ensure user enabled ---", end="", flush=True)
-        with app.app_context():
-            user = db.session.get(User, added_user_id)
-            self.assertEqual(user.enabled, 1)
-
-    def test_add_multiple_exercises(self):
-        """Test adding multiple exercises and verifying the final count."""
-
-        # Define a list of exercises to be added
-        exercises_to_add = [
-            {'name': 'Squat', 'description': 'High bar back squat'},
-            {'name': 'Bench', 'description': 'Wide grip flat bench barbell press'},
-            {'name': 'Dead', 'description': 'Conventional barbell floor deadlift'},
-            {'name': 'Press', 'description': 'Medium grip barbell standing press'},
-            {'name': 'Front Squat', 'description': 'Olympic style front barbell squat'}
-        ]
-
-        # Use a pre-defined admin user for the requests
-        headers = {
-            'X-User-ID': '1',
-            'X-User-Role': 'admin'
-        }
-
-        print("\n--- Adding exercises via POST ---")
-        for exercise in exercises_to_add:
-            res = self.app.post('/exercises/', json=exercise, headers=headers)
-            self.assertEqual(res.status_code, 201)
-
-        print("--- Verifying exercises via GET request ---")
-        get_res = self.app.get('/exercises/', headers=headers)
-        self.assertEqual(get_res.status_code, 200)
-        retrieved_exercises = get_res.get_json()
-
-        print(f"--- Verifying {len(retrieved_exercises)} exercises were added--")
-        self.assertEqual(len(retrieved_exercises), len(exercises_to_add))
-
-        print(f"--- Verifying all exercise names are correct---", end="", flush=True)
-        retrieved_names = {ex['name'] for ex in retrieved_exercises}
-        expected_names = {ex['name'] for ex in exercises_to_add}
-        self.assertSetEqual(retrieved_names, expected_names)
-
-    def test_add_workout_for_user(self):
-        """Test adding a new workout and verifying the database."""
-        target_user_id = self.admin_user_id
-
-        # Define the headers for the request.
-        headers = {
-            'X-User-ID': str(self.admin_user_id),
-            'X-User-Role': 'admin'
-        }
-
-        print("\n--- Adding workout via POST ---")
-        res = self.app.post(f'/workouts/{target_user_id}/add', headers=headers)
-        self.assertEqual(res.status_code, 201)
-        workout_data = res.get_json()
-        workout_id = workout_data['id']
-
-        print("--- Asserting response data ---")
-        self.assertEqual(workout_data['user_id'], target_user_id)
-
-        print("--- Verifying workout in database ---", end="", flush=True)
-        with app.app_context():
-            workout = db.session.get(Workout, workout_id)
-            self.assertIsNotNone(workout)
-            self.assertEqual(workout.user_id, target_user_id)
-
-    def test_add_and_update_set(self):
-        """Test adding a new set via POST and then updating it via PUT."""
-
-        # Precondition: Create a workout and an exercise
-        with app.app_context():
-            # Create an exercise
-            exercise = Exercise(
-                name="Squat",
-                description="Back Squat"
-            )
-            db.session.add(exercise)
-            db.session.commit()
-            exercise_id = exercise.id
-
-            # Create a workout and associate it with the exercise
-            workout = Workout(
-                user_id=self.admin_user_id,
-            )
-            db.session.add(workout)
-            db.session.commit()
-            workout_id = workout.id
-
-        # 1. Add a new set via POST
-        print("\n--- Adding a new set via POST ---")
-        payload = {
-            'exercise_id': exercise_id,
-            'weight': 135,
-            'reps': 4,
-            'comment': 'great'
-        }
-        headers = {
-            'X-User-ID': str(self.admin_user_id),
-            'X-User-Role': 'admin'
-        }
-        res_post = self.app.post(f'/sets/{workout_id}', json=payload, headers=headers)
-        self.assertEqual(res_post.status_code, 201)
-        added_set = res_post.get_json()
-        set_id = added_set['id']
-        print(f"--- Set successfully added with ID: {set_id}")
-
-        # 2. Update the newly created set via PUT
-        print("--- Updating the set via PUT ---")
-        update_payload = {
-            'weight': 155,
-            'reps': 5,
-            'comment': 'Not so great anymore'
-        }
-        res_put = self.app.put(f'/sets/{set_id}/update', json=update_payload, headers=headers)
-        self.assertEqual(res_put.status_code, 200)
-
-        # 3. Retrieve the updated set via GET
-        print("--- Retrieving the updated set via GET ---")
-        res_get = self.app.get(f'/sets/{workout_id}', headers=headers)
-        self.assertEqual(res_get.status_code, 200)
-        retrieved_sets = res_get.get_json()
-        self.assertEqual(len(retrieved_sets), 1)
-        retrieved_set = retrieved_sets[0]
-
-        # 4. Final assertions and printing the JSON
-        print("--- Asserting and printing final JSON ---", end="", flush=True)
-        self.assertEqual(retrieved_set['id'], set_id)
-        self.assertEqual(retrieved_set['weight'], 155)
-        self.assertEqual(retrieved_set['reps'], 5)
-        self.assertEqual(retrieved_set['comment'], 'Not so great anymore')
-        print("\n--- Final JSON values:\n", retrieved_set, end="", flush=True)
+	with app.app_context():
+		# Execute the SQL script directly using the app's database engine
+		with db.engine.connect() as connection:
+			connection.execute(text(sql_script))
+	print("SQL script executed successfully!")
 
 
-if __name__ == "__main__":
-    runner = MyTestRunner(verbosity=2)
-    unittest.main(testRunner=runner)
+@pytest.fixture(scope="session")
+def app():
+	# Configure the app for testing
+	flask_app.config['TESTING'] = True
+	flask_app.config['WTF_CSRF_ENABLED'] = False
+
+	# Yield the app instance, allowing tests to run
+	yield flask_app
+
+	# Teardown: Drop the tables at the end of the session
+	with flask_app.app_context():
+		db.drop_all()
+
+
+@pytest.fixture(scope="session")
+def seed_database(app):
+	"""
+	Fixture to drop, recreate, and seed the database using an external script.
+	This runs only once per test session.
+	"""
+	print("\n--- Initializing database for the test session ---")
+
+	with app.app_context():
+		# Step 1: Drop all existing tables
+		db.drop_all()
+		# Step 2: Create all tables from your models
+		db.create_all()
+
+	# Call the new function to load the data
+	load_data(app, db)
+
+	# The yield statement ensures this fixture's cleanup logic runs after all tests
+	yield
+
+
+@pytest.fixture(scope="session")
+def test_client(app):
+	return app.test_client()
+
+
+@pytest.fixture(scope="function")
+def session(app, seed_database):
+	"""
+	Provides a transactional session for each test, relying on the seeded database.
+	"""
+	with app.app_context():
+		connection = db.engine.connect()
+		transaction = connection.begin()
+
+		db.session = db._make_scoped_session(options={'bind': connection})
+
+		yield db.session
+
+		db.session.remove()
+		transaction.rollback()
+		connection.close()
+
+
+def test_add_user_success(test_client, session):
+	"""Test a new user can be added successfully by an admin."""
+
+	initial_count = 2
+
+	headers = {
+		'X-User-ID': 1,
+		'X-User-Role': 'admin'
+	}
+	payload = {
+		'first_name': 'Raj',
+		'last_name': 'Kumar',
+		'email': 'raj@devops-innovations.com'
+	}
+
+	print(f"\n--- Real DB user count: {initial_count} ---")
+	print(f"--- Adding new user {payload['first_name']} via POST request ---")
+	res = test_client.post('/users/add', json=payload, headers=headers)
+	assert res.status_code == 201
+
+	# Check the response data instead of database count
+	added_user = res.get_json()
+	print(f"--- Ensure added user's first email is {added_user['email']} ---")
+	assert added_user['first_name'] == 'Raj'
+	assert added_user['email'] == 'raj@devops-innovations.com'
+
+
+def test_swagger_docs_are_available(test_client):
+	"""Test for the swagger documentation."""
+	print("\n--- Swagger docs are reachable at localhost:5000/swagger.json ---")
+	res = test_client.get('/swagger.json')
+	assert res.status_code == 200
+
+
+def test_get_users_unauthorized(test_client):
+	"""Test the API's unauthorized user list retrieval."""
+	print("\n--- Getting error 401 if I do not login ---")
+	res = test_client.get('/users/')
+	assert res.status_code == 401
+
+
+def test_disable_enable_user(test_client, session, app):
+	"""Test that a user can be disabled and re-enabled by an admin."""
+	headers = {
+		'X-User-ID': 1,
+		'X-User-Role': 'admin'
+	}
+
+	user_to_toggle = 2
+	print("\n--- Ensure user enabled ---")
+	with app.app_context():
+		user = db.session.get(User, user_to_toggle)
+		assert user.enabled == 1
+
+	print(f"--- Disabling user {user.first_name} ---")
+	res_disable = test_client.put(f'/users/{user_to_toggle}/disable', headers=headers)
+	assert res_disable.status_code == 200
+
+	print(f"--- Ensure user {user.first_name} disabled ---")
+	with app.app_context():
+		user = db.session.get(User, user_to_toggle)
+		assert user.enabled == 0
+
+	print(f"--- Enabling user {user.first_name} ---")
+	res_enable = test_client.put(f'/users/{user_to_toggle}/enable', headers=headers)
+	assert res_enable.status_code == 200
+
+	print(f"--- Ensure user {user.first_name} enabled ---")
+	with app.app_context():
+		user = db.session.get(User, user_to_toggle)
+		assert user.enabled == 1
+
+
+def test_add_multiple_exercises(test_client, session, app):
+	"""Test adding multiple exercises and verifying the final count."""
+
+	exercises_to_add = [
+		{'name': 'Curl', 'description': 'Straight barbell curl'},
+		{'name': 'Pull up', 'description': 'Shoulder width body weight pull up'},
+		{'name': 'Dip', 'description': 'Parallel bar dip'}
+	]
+	headers = {
+		'X-User-ID': 1,
+		'X-User-Role': 'admin'
+	}
+
+	print("\n--- Getting initial exercise count ---")
+	get_res = test_client.get('/exercises/', headers=headers)
+	assert get_res.status_code == 200
+	initial_count = len(get_res.get_json())
+
+	print(f"--- Adding {len(exercises_to_add)} exercises to initial {initial_count} exercises ---")
+	for exercise in exercises_to_add:
+		res = test_client.post('/exercises/', json=exercise, headers=headers)
+		assert res.status_code == 201
+
+	print("--- Verifying exercises via GET request ---")
+	get_res = test_client.get('/exercises/', headers=headers)
+	assert get_res.status_code == 200
+	retrieved_exercises = get_res.get_json()
+
+	print(f"--- Verifying {len(exercises_to_add)} exercises were added---")
+	assert len(retrieved_exercises) == len(exercises_to_add) + initial_count
+	retrieved_names = {ex['name'] for ex in retrieved_exercises}
+	expected_names = {ex['name'] for ex in exercises_to_add}
+
+	print(f"--- Verifying all exercise names are {expected_names} ---")
+	assert expected_names <= retrieved_names
+
+
+def test_add_workout_for_user(test_client, session, app):
+	"""Test adding a new workout and verifying the database."""
+	headers = {
+		'X-User-ID': 1,
+		'X-User-Role': 'admin'
+	}
+
+	workout_user_id = 1
+	with app.app_context():
+		user = db.session.get(User, workout_user_id)
+	print(f"\n--- Adding workout for {user.first_name} via POST ---")
+
+	res = test_client.post(f'/workouts/{workout_user_id}/add', headers=headers)
+	assert res.status_code == 201
+	workout_data = res.get_json()
+	workout_id = workout_data['id']
+
+	print(f"--- Asserting user id {workout_user_id} ---")
+	assert workout_data['user_id'] == workout_user_id
+
+	print(f"--- Verifying workout for {user.first_name} in database ---")
+	with app.app_context():
+		workout = db.session.get(Workout, workout_id)
+		assert workout is not None
+		assert workout.user_id == workout_user_id
+
+
+def test_add_and_update_set(test_client, session, app):
+	"""Test adding a new set via POST and then updating it via PUT."""
+	# 1. Retrieve the updated set via GET
+	headers = {
+		'X-User-ID': 1,
+		'X-User-Role': 'admin'
+	}
+
+	workout_id = 1
+	print(f"\n--- Retrieve initial number of sets in workout {workout_id} ---")
+	res_get = test_client.get(f'/sets/{workout_id}', headers=headers)
+	assert res_get.status_code == 200
+	retrieved_sets = res_get.get_json()
+	initial_sets = len(retrieved_sets)
+
+	# 2. Add a new set via POST
+	payload = {
+		'exercise_id': 1,
+		'weight': 135,
+		'reps': 4,
+		'comment': 'great'
+	}
+	print(f"--- Adding a new set via POST with {payload} ---")
+	res_post = test_client.post(f'/sets/{workout_id}', json=payload, headers=headers)
+	assert res_post.status_code == 201
+	added_set = res_post.get_json()
+	set_id = added_set['id']
+	print(f"--- Set successfully added with ID: {set_id} ---")
+
+	# 3. Update the newly created set via PUT
+	update_payload = {
+		'weight': 155,
+		'reps': 5,
+		'comment': 'Not so great anymore'
+	}
+	print(f"--- Updating the set via PUT with {update_payload} ---")
+
+	res_put = test_client.put(f'/sets/{set_id}/update', json=update_payload, headers=headers)
+	assert res_put.status_code == 200
+
+	# 4. Retrieve the updated set via GET
+	print("--- Retrieving the updated set via GET ---")
+	res_get = test_client.get(f'/sets/{workout_id}', headers=headers)
+	assert res_get.status_code == 200
+	retrieved_sets = res_get.get_json()
+	assert len(retrieved_sets) == initial_sets + 1
+	retrieved_set = retrieved_sets[-1]
+
+	# 5. Final assertions and printing the JSON
+	print("--- Asserting and printing final JSON ---")
+	assert retrieved_set['id'] == set_id
+	assert retrieved_set['weight'] == 155
+	assert retrieved_set['reps'] == 5
+	assert retrieved_set['comment'] == 'Not so great anymore'
+	print("--- Final JSON values: ", retrieved_set)
+
+
+def test_calculate_one_rep_max(test_client, app, session, seed_database):
+    """
+    Test the /analytics/sets/<int:setID>/calc1rm endpoint
+    """
+
+    headers = {
+       'X-User-ID': 1,
+       'X-User-Role': 'admin'
+    }
+
+    set_to_calculate = 1
+    print(f"\n--- Testing successful 1RM calculation of set {set_to_calculate} ---")
+    res = test_client.get(f'/analytics/sets/{set_to_calculate}/calc1rm', headers=headers)
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['set_id'] == 1
+    # We are happy if the value returned is greater than zero
+    assert data['one_rep_max'] > 0
+    print(f"--- 1RM for set 1: {data['one_rep_max']}")
