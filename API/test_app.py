@@ -12,14 +12,12 @@ db_username = os.getenv("DB_USERNAME")
 db_password = os.getenv("DB_PASSWORD")
 db_host = os.getenv("DB_HOST")
 db_name = os.getenv("DB_NAME")
-
-print(f"Connecting to database: {db_name} on {db_host} with user {db_username}")
+data_file = os.getenv("DATA_FILE")
 
 
 def load_data(app, db):
 	"""Loads SQL data from a file into the database."""
-	# This path is relative to your project root.
-	sql_file_path = 'C:\\Users\\akoro\\OneDrive\\Documents\\GitHub\\Lifting\\DB\\data.sql'
+	sql_file_path = data_file
 
 	with open(sql_file_path, 'r', encoding='utf-8') as f:
 		sql_script = f.read()
@@ -28,19 +26,19 @@ def load_data(app, db):
 		# Execute the SQL script directly using the app's database engine
 		with db.engine.connect() as connection:
 			connection.execute(text(sql_script))
-	print("SQL script executed successfully!")
+	print("--- Test data loaded successfully! ---")
 
 
 @pytest.fixture(scope="session")
 def app():
-	# Configure the app for testing
+	print("\n--- Configuring FLASK for testing ---")
 	flask_app.config['TESTING'] = True
 	flask_app.config['WTF_CSRF_ENABLED'] = False
 
-	# Yield the app instance, allowing tests to run
+	print("--- Ready to run the test suite ---")
 	yield flask_app
 
-	# Teardown: Drop the tables at the end of the session
+	print("--- Cleaning up the DB ---")
 	with flask_app.app_context():
 		db.drop_all()
 
@@ -51,18 +49,17 @@ def seed_database(app):
 	Fixture to drop, recreate, and seed the database using an external script.
 	This runs only once per test session.
 	"""
-	print("\n--- Initializing database for the test session ---")
+	print(f"--- Connecting to database: '{db_name}' on '{db_host}' with user '{db_username}' ---")
 
 	with app.app_context():
-		# Step 1: Drop all existing tables
+		print(f"--- Removing all tables ---")
 		db.drop_all()
-		# Step 2: Create all tables from your models
+		print(f"--- Recreating all tables ---")
 		db.create_all()
 
-	# Call the new function to load the data
+	print(f"--- Loading test data ---")
 	load_data(app, db)
-
-	# The yield statement ensures this fixture's cleanup logic runs after all tests
+	print(f"--- Preseeding completed ---       ", end="", flush=True)
 	yield
 
 
@@ -257,7 +254,7 @@ def test_add_and_update_set(test_client, session, app):
 
 	# 3. Update the newly created set via PUT
 	update_payload = {
-		'weight': 155,
+		'weight': 105,
 		'reps': 5,
 		'comment': 'Not so great anymore'
 	}
@@ -277,7 +274,7 @@ def test_add_and_update_set(test_client, session, app):
 	# 5. Final assertions and printing the JSON
 	print("--- Asserting and printing final JSON ---")
 	assert retrieved_set['id'] == set_id
-	assert retrieved_set['weight'] == 155
+	assert retrieved_set['weight'] == 105
 	assert retrieved_set['reps'] == 5
 	assert retrieved_set['comment'] == 'Not so great anymore'
 	print("--- Final JSON values: ", retrieved_set)
@@ -322,5 +319,31 @@ def test_find_pr(test_client, app, session):
 	res = test_client.get(f'/analytics/users/{user_to_calculate}/exercises/{exercise_to_calculate}/findpr', headers=headers)
 	assert res.status_code == 200
 	data = res.get_json()
-	assert data['max_weight'] == 155
+	assert data['max_weight'] == 105
 	print(f"--- 1RM for user {user_name} for exercise {exercise_to_calculate}: {data['max_weight']}")
+
+
+def test_gets_sets(test_client, app, session):
+	"""
+	Test the /analytics/users/<int:userID>/exercises/<int:exerciseID>/getsets endpoint
+	"""
+
+	headers = {
+		'X-User-ID': 1,
+		'X-User-Role': 'admin'
+	}
+
+	user_to_calculate = 1
+	exercise_to_calculate = 1
+	users_dump = json.loads(test_client.get(f'/users/', headers=headers).data)
+	user_name = users_dump[0]['first_name']
+	exercise_dump = json.loads(test_client.get(f'/exercises/', headers=headers).data)
+	exercise_name = exercise_dump[0]['name']
+
+	print(f"\n--- Performance retrieval of {exercise_name} for user {user_name} ---")
+	res = test_client.get(f'/analytics/users/{user_to_calculate}/exercises/{exercise_to_calculate}/getsets', headers=headers)
+	assert res.status_code == 200
+	data = res.get_json()
+	assert len(data) == 3
+	for i in range(len(data)):
+		print(f"--- Set {data[i]['id']}: {data[i]['weight']} x {data[i]['reps']}")
