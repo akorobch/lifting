@@ -6,12 +6,16 @@ from models import db, User, Exercise, Workout, Set, SchemaVersion
 from datetime import datetime
 from functools import wraps
 from analytics import calculate_one_rep_max, find_pr, get_sets_for_exercise_and_user
+from flask_cors import CORS
+
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Initialize Flask and SQLAlchemy
 app = Flask(__name__)
+CORS(app)
+
 # Configure a simple SQLite database for local testing
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lifting.db'
 # Get database credentials from environment variables
