@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 
-const AddExerciseForm = () => {
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
+// Define the props interface
+interface AddExerciseFormProps {
+    onAddSuccess: () => void;
+}
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault(); // Prevents the default form submission behavior
+const AddExerciseForm: React.FC<AddExerciseFormProps> = ({ onAddSuccess }) => {
+    const [name, setName] = useState<string>('');
+    const [description, setDescription] = useState<string>('');
+    const [message, setMessage] = useState<string>('');
+    const [error, setError] = useState<string>('');
+
+    const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+        e.preventDefault();
         setMessage('');
         setError('');
 
@@ -37,6 +42,9 @@ const AddExerciseForm = () => {
             setName('');
             setDescription('');
 
+            // Call the prop function to notify the parent component
+            onAddSuccess();
+
         } catch (err) {
             if (err instanceof Error) {
                 setError(`Failed to add exercise: ${err.message}`);
@@ -44,6 +52,14 @@ const AddExerciseForm = () => {
                 setError('An unknown error occurred.');
             }
         }
+    };
+
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        setName(e.target.value);
+    };
+
+    const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+        setDescription(e.target.value);
     };
 
     return (
@@ -56,7 +72,7 @@ const AddExerciseForm = () => {
                         id="name"
                         type="text"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={handleNameChange}
                         required
                     />
                 </div>
@@ -65,7 +81,7 @@ const AddExerciseForm = () => {
                     <textarea
                         id="description"
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        onChange={handleDescriptionChange}
                         required
                     />
                 </div>

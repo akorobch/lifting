@@ -271,6 +271,21 @@ class WorkoutAdd(Resource):
         return new_workout, 201
 
 
+@ns_workouts.route('/<int:userID>/get')
+class WorkoutGet(Resource):
+    @ns_workouts.doc('get_workouts_for_user')
+    @ns_workouts.marshal_list_with(workout_model)
+    @requires_auth(['admin', 'user', 'report'])
+    def get(self, userID):
+        """Lists all workouts for a specific user"""
+        # Validate that the user exists
+        User.query.get_or_404(userID, description="User not found")
+
+        # Get all workouts for the specified user ID
+        workouts = Workout.query.filter_by(user_id=userID).all()
+        return workouts
+
+
 set_model = api.model('Set', {
     'id': fields.Integer(readOnly=True),
     'exercise_id': fields.Integer(required=True),

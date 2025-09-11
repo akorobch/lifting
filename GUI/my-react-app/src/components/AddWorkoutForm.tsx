@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 
-const AddWorkoutForm = ({ onWorkoutAdded }: { onWorkoutAdded: () => void }) => {
-    const [comment, setComment] = useState('');
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
+// Define an interface for the component's props
+interface AddWorkoutFormProps {
+    onWorkoutAdded: () => void;
+}
 
-    const handleSubmit = async (e: React.FormEvent) => {
+const AddWorkoutForm: React.FC<AddWorkoutFormProps> = ({ onWorkoutAdded }) => {
+    const [comment, setComment] = useState<string>('');
+    const [message, setMessage] = useState<string>('');
+    const [error, setError] = useState<string>('');
+
+    const handleSubmit = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
         setMessage('');
         setError('');
 
-        // Construct the URL with optional parameters
         const baseUrl = 'http://localhost:5000/workouts/1/add';
         const url = `${baseUrl}?comment=${encodeURIComponent(comment)}`;
 
@@ -42,16 +46,19 @@ const AddWorkoutForm = ({ onWorkoutAdded }: { onWorkoutAdded: () => void }) => {
         }
     };
 
+    const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+        setComment(e.target.value);
+    };
+
     return (
         <form onSubmit={handleSubmit}>
             <h3>Create Workout</h3>
-            {/* The date is optional and handled on the backend based on your curl command. */}
             <div>
                 <label htmlFor="comment">Comment:</label>
                 <textarea
                     id="comment"
                     value={comment}
-                    onChange={(e) => setComment(e.target.value)}
+                    onChange={handleCommentChange}
                 />
             </div>
             <button type="submit">Confirm</button>
