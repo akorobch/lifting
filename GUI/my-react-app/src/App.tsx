@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import './App.css';
-import ExercisesDropdown from './components/ExerciseDropdown';
+//import ExercisesDropdown from './components/ExerciseDropdown';
 import Modal from './components/Modal';
 import AddWorkoutForm from './components/AddWorkoutForm';
 import AddExerciseForm from './components/AddExerciseForm';
@@ -38,7 +37,6 @@ const App: React.FC = () => {
                     >
                         Add New Exercise
                     </button>
-                    <ExercisesDropdown key={refreshKey} />
                 </div>
 
                 <hr className="my-6 border-gray-300" />

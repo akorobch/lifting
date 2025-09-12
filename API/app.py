@@ -154,6 +154,28 @@ class UserDisable(Resource):
         db.session.commit()
         return user
 
+# Assuming ns_users and user_model are already defined
+@ns_users.route('/<int:id>/delete')
+class UserDelete(Resource):
+    @ns_users.doc('delete_user')
+    @ns_users.response(204, 'User successfully deleted')
+    @ns_users.response(404, 'User not found')
+    @requires_auth(['admin'])
+    def delete(self, id):
+        """Deletes a user by their ID"""
+        # 1. Find the user by ID, or abort with a 404 if not found.
+        user = User.query.get_or_404(id, description="User not found")
+        
+        # 2. Delete the user from the database session.
+        # This will also delete any related workouts and exercises due to cascade delete.
+        db.session.delete(user)
+        
+        # 3. Commit the session to persist the deletion to the database.
+        db.session.commit()
+        
+        # 4. Return a 204 No Content response, which is standard for a successful DELETE operation.
+        return '', 204
+    
 # Create a request parser to handle the input parameters
 parser = reqparse.RequestParser()
 parser.add_argument('first_name', type=str, required=True, help='First name of the user')
@@ -221,6 +243,28 @@ class ExerciseList(Resource):
         exercises = Exercise.query.all()
         return exercises
 
+# Assuming ns_exercises is already defined
+@ns_exercises.route('/<int:id>/delete')
+class ExerciseDelete(Resource):
+    @ns_exercises.doc('delete_exercise')
+    @ns_exercises.response(204, 'Exercise successfully deleted')
+    @ns_exercises.response(404, 'Exercise not found')
+    @requires_auth(['admin'])
+    def delete(self, id):
+        """Deletes an exercise by its ID"""
+        
+        # 1. Retrieve the exercise record by its ID, or return a 404 if it doesn't exist.
+        exercise = Exercise.query.get_or_404(id, description="Exercise not found")
+        
+        # 2. Delete the exercise from the database session.
+        db.session.delete(exercise)
+        
+        # 3. Commit the changes to the database.
+        db.session.commit()
+        
+        # 4. Return a 204 No Content status, which is the standard response for a successful deletion.
+        return '', 204
+    
 # Model for the API documentation
 workout_model = api.model('Workout', {
     'id': fields.Integer(readOnly=True),
@@ -285,6 +329,26 @@ class WorkoutGet(Resource):
         workouts = Workout.query.filter_by(user_id=userID).all()
         return workouts
 
+
+@ns_workouts.route('/<int:workoutID>/delete')
+class WorkoutDelete(Resource):
+    @ns_workouts.doc('delete_workout')
+    @ns_workouts.response(204, 'Workout successfully deleted')
+    @ns_workouts.response(404, 'Workout not found')
+    @requires_auth(['admin'])
+    def delete(self, workoutID):
+        """Deletes a workout by its ID"""
+        # 1. Find the workout by ID, or return 404 if not found
+        workout = Workout.query.get_or_404(workoutID, description="Workout not found")
+
+        # 2. Delete the workout and its associated sets
+        # Assuming you have a cascade delete relationship set up on your database model
+        db.session.delete(workout)
+        db.session.commit()
+
+        # 3. Return a 204 No Content status for a successful deletion
+        return '', 204
+    
 
 set_model = api.model('Set', {
     'id': fields.Integer(readOnly=True),
@@ -377,6 +441,26 @@ class SetUpdate(Resource):
         db.session.commit()
         return set_record
 
+# Assuming ns_sets and set_model are already defined
+@ns_sets.route('/<int:setID>/delete')
+class SetDelete(Resource):
+    @ns_sets.doc('delete_set')
+    @ns_sets.response(204, 'Set successfully deleted')
+    @ns_sets.response(404, 'Set not found')
+    @requires_auth(['admin', 'user'])
+    def delete(self, setID):
+        """Deletes a set by its ID"""
+        # 1. Retrieve the set record by its ID, or return a 404 if it doesn't exist.
+        set_record = Set.query.get_or_404(setID, description="Set not found")
+        
+        # 2. Delete the set from the database session.
+        db.session.delete(set_record)
+        
+        # 3. Commit the changes to the database.
+        db.session.commit()
+        
+        # 4. Return a 204 No Content status, which is the standard response for a successful deletion.
+        return '', 204
 
 schema_version_model = api.model('SchemaVersion', {
     'id': fields.Integer(readOnly=True),

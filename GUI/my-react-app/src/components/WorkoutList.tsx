@@ -17,6 +17,13 @@ interface Set {
     workout_id: number;
 }
 
+// NEW: Interface for the exercise data
+interface Exercise {
+    id: number;
+    name: string;
+    description: string;
+}
+
 interface WorkoutListProps {
     refreshKey: number;
 }
@@ -35,6 +42,11 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
     const [sets, setSets] = useState<Set[]>([]);
     const [isFetchingSets, setIsFetchingSets] = useState<boolean>(false);
 
+    // NEW: State for exercises list and loading
+    const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [isFetchingExercises, setIsFetchingExercises] = useState<boolean>(true);
+    const [exerciseFetchError, setExerciseFetchError] = useState<string | null>(null);
+
     // State for the new set editing modal
     const [showEditSetModal, setShowEditSetModal] = useState<boolean>(false);
     const [selectedSet, setSelectedSet] = useState<Set | null>(null);
@@ -48,6 +60,7 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
     });
     const userId: number = 1;
 
+    // useEffect to fetch workouts
     useEffect(() => {
         const fetchWorkouts = async () => {
             setIsLoading(true);
@@ -72,6 +85,41 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
 
         fetchWorkouts();
     }, [refreshKey]);
+
+    // NEW: useEffect to fetch exercises once on component mount
+    useEffect(() => {
+        const fetchExercises = async () => {
+            setIsFetchingExercises(true);
+            setExerciseFetchError(null);
+            try {
+                const response = await fetch('http://127.0.0.1:5000/exercises/', {
+                    headers: {
+                        'X-User-ID': '1',
+                        'X-User-Role': 'admin'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch exercises with status: ${response.status}`);
+                }
+                
+                const data: Exercise[] = await response.json();
+                const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+                setExercises(sortedData);
+            } catch (error) {
+                if (error instanceof Error) {
+                    setExerciseFetchError(error.message);
+                } else {
+                    setExerciseFetchError('An unknown error occurred while fetching exercises.');
+                }
+                console.error("Failed to fetch exercises:", error);
+                setExercises([]);
+            } finally {
+                setIsFetchingExercises(false);
+            }
+        };
+        fetchExercises();
+    }, []);
 
     const fetchSetsForWorkout = async (workoutId: number) => {
         setIsFetchingSets(true);
@@ -125,7 +173,7 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
         }
     };
 
-    const handleNewSetFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleNewSetFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setNewSetForm(prev => ({ ...prev, [name]: value }));
     };
@@ -261,18 +309,33 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                         <h4 className="text-md font-semibold mb-2">Add New Set</h4>
                         <form onSubmit={handleNewSetSubmit}>
                             <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="new-set-exercise-id">Exercise ID</label>
-                                    <input
-                                        type="number"
+                                {/* NEW: Exercise dropdown */}
+                                <div className="col-span-2">
+                                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="new-set-exercise-id">Exercise</label>
+                                    <select
                                         id="new-set-exercise-id"
                                         name="exercise_id"
                                         value={newSetForm.exercise_id}
                                         onChange={handleNewSetFormChange}
                                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700"
                                         required
-                                    />
+                                        disabled={isFetchingExercises || !!exerciseFetchError}
+                                    >
+                                        <option value="" disabled>
+                                            {isFetchingExercises ? "Loading exercises..." : "Select an exercise..."}
+                                        </option>
+                                        {exerciseFetchError ? (
+                                            <option value="" disabled>Error loading exercises</option>
+                                        ) : (
+                                            exercises.map((exercise) => (
+                                                <option key={exercise.id} value={exercise.id}>
+                                                    {exercise.name}
+                                                </option>
+                                            ))
+                                        )}
+                                    </select>
                                 </div>
+
                                 <div>
                                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="new-set-weight">Weight</label>
                                     <input
@@ -312,6 +375,7 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                                 <button
                                     type="submit"
                                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                                    disabled={isFetchingExercises || !!exerciseFetchError}
                                 >
                                     Add Set
                                 </button>
