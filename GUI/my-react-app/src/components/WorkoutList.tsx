@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal'; 
+import ConfirmationModal from './ConfirmationModal';
 
 // Define TypeScript interfaces for your data structures
 interface Workout {
@@ -17,7 +18,6 @@ interface Set {
     workout_id: number;
 }
 
-// NEW: Interface for the exercise data
 interface Exercise {
     id: number;
     name: string;
@@ -42,7 +42,6 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
     const [sets, setSets] = useState<Set[]>([]);
     const [isFetchingSets, setIsFetchingSets] = useState<boolean>(false);
 
-    // NEW: State for exercises list and loading
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [isFetchingExercises, setIsFetchingExercises] = useState<boolean>(true);
     const [exerciseFetchError, setExerciseFetchError] = useState<string | null>(null);
@@ -58,6 +57,10 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
         reps: '',
         comment: ''
     });
+
+    const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false);
+    const [workoutToDelete, setWorkoutToDelete] = useState<number | null>(null);
+
     const userId: number = 1;
 
     // useEffect to fetch workouts
@@ -121,6 +124,13 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
         fetchExercises();
     }, []);
 
+
+    // Find the exercise name from its ID
+    const getExerciseName = (exerciseId: number): string => {
+        const exercise = exercises.find(ex => ex.id === exerciseId);
+        return exercise ? exercise.name : 'Unknown Exercise';
+    };
+
     const fetchSetsForWorkout = async (workoutId: number) => {
         setIsFetchingSets(true);
         try {
@@ -148,6 +158,66 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
         setShowWorkoutDetailsModal(true);
     };
 
+    const handleDeleteWorkout = async (workoutId: number) => {
+        if (!window.confirm("Are you sure you want to delete this workout? This action cannot be undone.")) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/workouts/${workoutId}/delete`, {
+                method: 'DELETE',
+                headers: {
+                    'X-User-Role': 'admin',
+                    'X-User-ID': userId.toString()
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Remove the deleted workout from the state
+            setWorkouts(workouts.filter(w => w.id !== workoutId));
+
+        } catch (error) {
+            console.error("Failed to delete workout:", error);
+            alert("An error occurred while deleting the workout. Please try again.");
+        }
+    };
+
+    const handleDeleteConfirmed = async () => {
+        if (workoutToDelete === null) return;
+
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/workouts/${workoutToDelete}/delete`, {
+                method: 'DELETE',
+                headers: {
+                    'X-User-Role': 'admin',
+                    'X-User-ID': userId.toString()
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            setWorkouts(workouts.filter(w => w.id !== workoutToDelete));
+            setShowConfirmDelete(false); // Hide the modal after deletion
+            setWorkoutToDelete(null); // Reset the state
+            
+        } catch (error) {
+            console.error("Failed to delete workout:", error);
+            alert("An error occurred while deleting the workout. Please try again.");
+            setShowConfirmDelete(false);
+        }
+    };
+
+    // New function to show the confirmation modal
+    const handleDeleteClick = (workoutId: number) => {
+        setWorkoutToDelete(workoutId);
+        setShowConfirmDelete(true);
+    };
+
     const handleSetRowClick = (set: Set) => {
         setSelectedSet(set);
         setEditForm({ 
@@ -156,6 +226,36 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
             comment: set.comment 
         });
         setShowEditSetModal(true);
+    };
+
+    const handleDeleteSet = async (setId: number) => {
+        if (!window.confirm("Are you sure you want to delete this set?")) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5000/sets/${setId}/delete`, {
+                method: 'DELETE',
+                headers: {
+                    'X-User-Role': 'admin',
+                    'X-User-ID': userId.toString()
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Update the state to remove the deleted set
+            setSets(sets.filter(s => s.id !== setId));
+
+            setSelectedSet(null); 
+            setShowEditSetModal(false);
+
+        } catch (error) {
+            console.error("Failed to delete set:", error);
+            alert("An error occurred while deleting the set. Please try again.");
+        }
     };
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -296,6 +396,17 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{workout.id}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(workout.workout_date).toLocaleString()}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{workout.comment}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Stop the click from bubbling up to the row
+                                        handleDeleteClick(workout.id);
+                                    }}
+                                    className="text-red-600 hover:text-red-900 font-bold"
+                                >
+                                    X
+                                </button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
@@ -393,7 +504,7 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exercise ID</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exercise</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reps</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
@@ -407,10 +518,22 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                                             className="cursor-pointer hover:bg-gray-100 transition-colors"
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{set.id}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{set.exercise_id}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getExerciseName(set.exercise_id)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{set.weight}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{set.reps}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{set.comment}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <button
+                                                    onClick={(e) => {
+                                                        // 🆕 NEW: Stop the click from triggering the row's handler
+                                                        e.stopPropagation(); 
+                                                        handleDeleteSet(set.id);
+                                                    }}
+                                                    className="text-red-600 hover:text-red-900 font-bold"
+                                                >
+                                                    X
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -428,7 +551,11 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                 </div>
             </Modal>
 
-            <Modal show={showEditSetModal} onClose={() => { setShowEditSetModal(false); setSelectedSet(null); }}>
+            <Modal 
+                key={selectedSet?.id || 'edit-set-modal'} 
+                show={showEditSetModal} 
+                onClose={() => { setShowEditSetModal(false); setSelectedSet(null); }}
+            >
                 <div className="p-4">
                     <h3 className="text-lg font-bold mb-4">Edit Set #{selectedSet?.id}</h3>
                     {successMessage && (
@@ -485,6 +612,13 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                     </form>
                 </div>
             </Modal>
+
+            <ConfirmationModal
+                show={showConfirmDelete}
+                onConfirm={handleDeleteConfirmed}
+                onCancel={() => setShowConfirmDelete(false)}
+                message="Are you sure you want to delete this workout? This action cannot be undone."
+            />
         </div>
     );
 };
