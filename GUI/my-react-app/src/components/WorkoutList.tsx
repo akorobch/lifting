@@ -26,6 +26,7 @@ interface Exercise {
 
 interface WorkoutListProps {
     refreshKey: number;
+    userId: number;
 }
 
 interface EditFormState {
@@ -34,7 +35,7 @@ interface EditFormState {
     comment: string;
 }
 
-const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
+const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey, userId }) => {
     const [workouts, setWorkouts] = useState<Workout[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [showWorkoutDetailsModal, setShowWorkoutDetailsModal] = useState<boolean>(false);
@@ -60,8 +61,6 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
 
     const [showConfirmDelete, setShowConfirmDelete] = useState<boolean>(false);
     const [workoutToDelete, setWorkoutToDelete] = useState<number | null>(null);
-
-    const userId: number = 1;
 
     // useEffect to fetch workouts
     useEffect(() => {

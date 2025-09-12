@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-//import ExercisesDropdown from './components/ExerciseDropdown';
+import React, { useState, useEffect } from 'react';
 import Modal from './components/Modal';
 import AddWorkoutForm from './components/AddWorkoutForm';
 import AddExerciseForm from './components/AddExerciseForm';
@@ -7,6 +6,24 @@ import WorkoutList from './components/WorkoutList';
 import './index.css';
 
 const App: React.FC = () => {
+    const userId: number = 1;
+    const [userName, setUserName] = useState<string>('Alex');
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/users/${userId}`, {
+                    headers: { 'X-User-ID': userId.toString() }
+                });
+                const userData = await response.json();
+                setUserName(userData.first_name);
+            } catch (error) {
+                console.error("Failed to fetch user data", error);
+            }
+        };
+        fetchUser();
+    }, []);
+
     const [showExerciseModal, setShowExerciseModal] = useState<boolean>(false);
     const [showWorkoutModal, setShowWorkoutModal] = useState<boolean>(false);
     const [refreshKey, setRefreshKey] = useState<number>(0);
@@ -18,8 +35,6 @@ const App: React.FC = () => {
 
     const handleWorkoutAdded = (): void => {
         setShowWorkoutModal(false);
-        // We also need to refresh the workout list after a new workout is added
-        // The WorkoutList component depends on `refreshKey` to re-fetch data
         setRefreshKey(prevKey => prevKey + 1);
     };
 
@@ -27,7 +42,7 @@ const App: React.FC = () => {
         <div className="flex flex-col items-center p-6 bg-gray-100 min-h-screen font-inter text-gray-800">
             <div className="w-full max-w-4xl p-8 bg-white rounded-xl shadow-lg">
                 <h1 className="text-4xl font-bold text-center text-blue-600 mb-2">Lifting App</h1>
-                <p className="text-center text-lg text-gray-600 mb-8">Welcome, Alex!</p>
+                <p className="text-center text-lg text-gray-600 mb-8">Welcome, {userName}!</p>
                 
                 {/* Exercise Management Section */}
                 <div className="bg-blue-50 p-6 rounded-lg mb-6 shadow-sm border border-blue-200">
@@ -58,7 +73,7 @@ const App: React.FC = () => {
 
                 {/* Workout List Section */}
                 <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
-                    <WorkoutList refreshKey={refreshKey} />
+                    <WorkoutList refreshKey={refreshKey} userId={userId} />
                 </div>
                 
                 {/* Modals are rendered outside of the panes so they can be positioned properly */}
