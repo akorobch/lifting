@@ -5,6 +5,7 @@ interface ModalProps {
     show: boolean;
     onClose: () => void;
     children: React.ReactNode;
+    maxWidthClass?: string; 
 }
 
 const Modal = ({ show, onClose, children }: ModalProps) => {

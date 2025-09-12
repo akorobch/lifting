@@ -1,11 +1,18 @@
+/* App.css */
+
+/*
+  Base styles for common elements.
+  These are similar to the styles a framework would provide
+  for a clean slate.
+*/
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: #1f2937;
+  background-color: #f3f4f6;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,56 +20,455 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 600;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: background-color 0.25s, color 0.25s, border-color 0.25s;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+a {
+  text-decoration: none;
+}
+
+/*
+  Utility classes generated from your JSX.
+  These directly correspond to the classNames you provided.
+*/
+
+/* Layout and Container */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.p-6 { padding: 1.5rem; }
+.w-full { width: 100%; }
+.max-w-4xl { max-width: 56rem; /* 896px */ }
+.p-8 { padding: 2rem; }
+.min-h-screen { min-height: 100vh; }
+.my-6 { margin-top: 1.5rem; margin-bottom: 1.5rem; }
+
+/* Colors */
+.bg-gray-100 { background-color: #f3f4f6; }
+.bg-white { background-color: #ffffff; }
+.text-gray-800 { color: #1f2937; }
+.text-blue-600 { color: #2563eb; }
+.text-gray-600 { color: #4b5563; }
+.bg-blue-50 { background-color: #eff6ff; }
+.text-blue-700 { color: #1d4ed8; }
+.border-blue-200 { border-color: #bfdbfe; }
+.bg-green-50 { background-color: #f0fdf4; }
+.text-green-700 { color: #047857; }
+.border-green-200 { border-color: #d1fae5; }
+.bg-gray-50 { background-color: #f9fafb; }
+.text-gray-700 { color: #374151; }
+.border-gray-200 { border-color: #e5e7eb; }
+.border-gray-300 { border-color: #d1d5db; }
+.bg-blue-600 { background-color: #2563eb; }
+.text-white { color: #ffffff; }
+.hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+.bg-green-600 { background-color: #059669; }
+.hover\:bg-green-700:hover { background-color: #04785e; }
+
+/* Typography */
+.font-inter { font-family: 'Inter', sans-serif; }
+.text-4xl { font-size: 2.25rem; /* 36px */ line-height: 2.5rem; /* 40px */ }
+.font-bold { font-weight: 700; }
+.text-center { text-align: center; }
+.mb-2 { margin-bottom: 0.5rem; }
+.text-lg { font-size: 1.125rem; /* 18px */ line-height: 1.75rem; /* 28px */ }
+.mb-8 { margin-bottom: 2rem; }
+.text-2xl { font-size: 1.5rem; /* 24px */ line-height: 2rem; /* 32px */ }
+.font-semibold { font-weight: 600; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+
+/* Borders and Shadows */
+.rounded-xl { border-radius: 0.75rem; }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+.rounded-lg { border-radius: 0.5rem; }
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+.border { border-width: 1px; }
+
+/* Spacing & Sizing */
+.w-full { width: 100%; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+
+/* Add to your existing App.css file */
+
+/* Exercise Form Specifics */
+.add-exercise-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Equivalent to gap-6 in Tailwind */
+}
+
+.add-exercise-form h2 {
+    font-size: 1.5rem; /* Equivalent to text-2xl */
+    font-weight: 600; /* Equivalent to font-semibold */
+    color: #1d4ed8; /* A shade of blue for the heading */
+}
+
+/* Form elements */
+.add-exercise-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Equivalent to gap-4 */
+}
+
+.add-exercise-form form div {
+    display: flex;
+    flex-direction: column;
+}
+
+.add-exercise-form label {
+    font-weight: 600; /* Equivalent to font-semibold */
+    color: #4b5563; /* Equivalent to text-gray-600 */
+    margin-bottom: 0.5rem; /* Equivalent to mb-2 */
+}
+
+.add-exercise-form input,
+.add-exercise-form textarea {
+    padding: 0.75rem 1rem; /* Equivalent to p-3 and px-4 */
+    border-radius: 0.375rem; /* Equivalent to rounded-md */
+    border: 1px solid #d1d5db; /* Equivalent to border border-gray-300 */
+    transition: border-color 0.25s, box-shadow 0.25s;
+    font-size: 1rem;
+}
+
+.add-exercise-form input:focus,
+.add-exercise-form textarea:focus {
+    outline: none;
+    border-color: #2563eb; /* A blue focus border */
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.add-exercise-form textarea {
+    resize: vertical;
+    min-height: 5rem; /* Set a minimum height for the textarea */
+}
+
+/* Form Buttons */
+.add-exercise-form button[type="submit"] {
+    background-color: #2563eb;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    align-self: flex-start; /* Aligns button to the left */
+    transition: background-color 0.25s;
+    border: none;
+}
+
+.add-exercise-form button[type="submit"]:hover {
+    background-color: #1d4ed8;
+}
+
+/* Status Messages */
+.success-message {
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    background-color: #dcfce7; /* A light green background */
+    color: #16a34a; /* A darker green text color */
+    font-weight: 500;
+    text-align: center;
+    border: 1px solid #bbf7d0;
+}
+
+.error-message {
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    background-color: #fee2e2; /* A light red background */
+    color: #dc2626; /* A darker red text color */
+    font-weight: 500;
+    text-align: center;
+    border: 1px solid #fca5a5;
+}
+
+/* Style for h3 within forms */
+.add-workout-form h3 {
+  font-size: 1.5rem; /* Equivalent to Tailwind's text-2xl */
+  font-weight: 600; /* Equivalent to font-semibold */
+  color: #1d4ed8; /* A shade of blue for the heading */
+  margin-bottom: 1rem; /* Spacing below the heading */
+}
+
+/* Base styles for the form container */
+.add-workout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Spacing between form elements */
+}
+
+/* Ensure consistent form element layout */
+.add-workout-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.add-workout-form label {
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+/* Add to your existing App.css file */
+
+/* Modal Layout */
+.p-4 {
+    padding: 1rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mb-6 {
+    margin-bottom: 1.5rem;
+}
+
+.flex {
+    display: flex;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.space-x-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-left: 1rem;
+}
+
+/* Typography */
+.text-xl {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+/* Button Colors */
+.bg-red-600 {
+    background-color: #dc2626;
+}
+
+.hover\:bg-red-700:hover {
+    background-color: #b91c1c;
+}
+
+.bg-gray-300 {
+    background-color: #d1d5db;
+}
+
+.text-gray-800 {
+    color: #1f2937;
+}
+
+.hover\:bg-gray-400:hover {
+    background-color: #9ca3af;
+}
+
+/* Reusable Button Styling */
+.px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.py-2 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.rounded-md {
+    border-radius: 0.375rem;
+}
+
+.transition-colors {
+    transition-property: background-color, border-color, color;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Add to your existing App.css file */
+
+/* Table Layout */
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+.min-w-full {
+    min-width: 100%;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse; /* Merges cell borders */
+}
+
+.divide-y > :not([hidden]) ~ :not([hidden]) {
+    border-top-width: 1px;
+}
+
+.divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #e5e7eb;
+}
+
+.shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.rounded-lg {
+    border-radius: 0.5rem;
+}
+
+/* Table Head and Cells */
+.bg-gray-50 {
+    background-color: #f9fafb;
+}
+
+.px-6 {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.py-3 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+.tracking-wider {
+    letter-spacing: 0.05em;
+}
+
+.whitespace-nowrap {
+    white-space: nowrap;
+}
+
+.px-6.py-4 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.text-gray-900 {
+    color: #111827;
+}
+
+/* Table Row and Hover Effect */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.hover\:bg-gray-100:hover {
+    background-color: #f3f4f6;
+}
+
+.transition-colors {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* Form Styles */
+.grid {
+    display: grid;
+}
+
+.grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.col-span-2 {
+    grid-column: span 2 / span 2;
+}
+
+.block {
+    display: block;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+/* Form inputs and select */
+.shadow {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.appearance-none {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.py-2 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.px-3 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+/* Button Alignment */
+.justify-end {
+    justify-content: flex-end;
+}
+
+.grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.col-span-3 {
+    grid-column: span 3 / span 3;
+}
+
+.max-w-2xl {
+    max-width: 42rem; /* 672px */
+}
+
+/* Horizontal Centering */
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
 }

@@ -381,7 +381,6 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
             <table className="min-w-full divide-y divide-gray-200 shadow-md rounded-lg">
                 <thead className="bg-gray-50">
                     <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
                     </tr>
@@ -393,7 +392,6 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                             onClick={() => handleRowClick(workout.id)}
                             className="cursor-pointer hover:bg-gray-100 transition-colors"
                         >
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{workout.id}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(workout.workout_date).toLocaleString()}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{workout.comment}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -412,16 +410,21 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                 </tbody>
             </table>
             
-            <Modal show={showWorkoutDetailsModal} onClose={() => setShowWorkoutDetailsModal(false)}>
+            <Modal
+                show={showWorkoutDetailsModal}
+                onClose={() => setShowWorkoutDetailsModal(false)}
+                // 🆕 NEW: Pass the width class directly to the Modal component
+                maxWidthClass="max-w-2xl"
+            >
                 <div className="p-4">
                     <h3 className="text-lg font-bold mb-2">Sets for Workout #{selectedWorkoutId}</h3>
                     
                     <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <h4 className="text-md font-semibold mb-2">Add New Set</h4>
                         <form onSubmit={handleNewSetSubmit}>
-                            <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-3 gap-4 mb-4">
                                 {/* NEW: Exercise dropdown */}
-                                <div className="col-span-2">
+                                <div>
                                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="new-set-exercise-id">Exercise</label>
                                     <select
                                         id="new-set-exercise-id"
@@ -471,7 +474,7 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                                         required
                                     />
                                 </div>
-                                <div className="col-span-2">
+                                <div className="col-span-3">
                                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="new-set-comment">Comment</label>
                                     <textarea
                                         id="new-set-comment"
@@ -503,7 +506,6 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                             <table className="min-w-full divide-y divide-gray-200 shadow-md rounded-lg">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exercise</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reps</th>
@@ -517,7 +519,6 @@ const WorkoutList: React.FC<WorkoutListProps> = ({ refreshKey }) => {
                                             onClick={() => handleSetRowClick(set)}
                                             className="cursor-pointer hover:bg-gray-100 transition-colors"
                                         >
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{set.id}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getExerciseName(set.exercise_id)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{set.weight}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{set.reps}</td>

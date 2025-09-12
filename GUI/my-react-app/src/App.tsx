@@ -4,6 +4,7 @@ import Modal from './components/Modal';
 import AddWorkoutForm from './components/AddWorkoutForm';
 import AddExerciseForm from './components/AddExerciseForm';
 import WorkoutList from './components/WorkoutList';
+import './index.css';
 
 const App: React.FC = () => {
     const [showExerciseModal, setShowExerciseModal] = useState<boolean>(false);
@@ -57,7 +58,6 @@ const App: React.FC = () => {
 
                 {/* Workout List Section */}
                 <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h2 className="text-2xl font-semibold mb-3 text-gray-700">Workout History</h2>
                     <WorkoutList refreshKey={refreshKey} />
                 </div>
                 

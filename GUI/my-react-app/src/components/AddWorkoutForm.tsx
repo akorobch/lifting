@@ -51,19 +51,31 @@ const AddWorkoutForm: React.FC<AddWorkoutFormProps> = ({ onWorkoutAdded }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h3>Create Workout</h3>
-            <div>
-                <label htmlFor="comment">Comment:</label>
+        <form onSubmit={handleSubmit} className="p-4 bg-white shadow-md rounded-lg max-w-sm mx-auto">
+            <h3 className="text-xl font-semibold mb-4 text-center">Create Workout</h3>
+            
+            <div className="mb-4">
+                <label htmlFor="comment" className="block text-gray-700 text-sm font-bold mb-2">
+                    Comment:
+                </label>
                 <textarea
                     id="comment"
                     value={comment}
                     onChange={handleCommentChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 />
             </div>
-            <button type="submit">Confirm</button>
-            {message && <div className="success-message">{message}</div>}
-            {error && <div className="error-message">{error}</div>}
+            
+            <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors w-full"
+
+            >
+                Confirm
+            </button>
+            
+            {message && <div className="mt-4 text-green-600 text-center font-bold">{message}</div>}
+            {error && <div className="mt-4 text-red-600 text-center font-bold">{error}</div>}
         </form>
     );
 };
